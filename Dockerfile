@@ -18,12 +18,13 @@ RUN adduser \
     --uid "${UID}" \    
     "${USER}"WORKDIR $GOPATH/src/glarfs/observerip/
 COPY . .
-# Fetch dependencies.# Using go get.
+# Fetch dependencies.
+# Using go get.
 RUN go get -d -v
 # Using go mod.
 # RUN go mod download
-# RUN go mod verify# Build the binary.
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/observerip-proxy
+# RUN go mod verify
+# Build the binary.
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/observerip-proxy
 ############################
 # STEP 2 build a small image
@@ -36,5 +37,7 @@ COPY --from=builder /etc/group /etc/group
 COPY --from=builder /go/bin/observerip-proxy /go/bin/observerip-proxy
 # Use an unprivileged user.
 USER appuser:appuser
+# expose 8080 port
+EXPOSE 8080
 # Run the hello binary.
 ENTRYPOINT ["/go/bin/observerip-proxy"]
