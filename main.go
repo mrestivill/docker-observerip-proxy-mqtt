@@ -25,8 +25,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"sync"
+	"os"
 	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 // Command-line flags.
@@ -40,9 +42,24 @@ const baseChangeURL = "https://go.googlesource.com/go/+/"
 
 func main() {
 	flag.Parse()
-	changeURL := fmt.Sprintf("%sgo%s", baseChangeURL, *version)
-	http.Handle("/", NewServer(*version, changeURL, *pollPeriod))
+	// env variables
+	mqttBroker := getEnv("OBSERVER_MQTT_HOST", "192.168.1.1")
+	mqttPort := getEnv("OBSERVER_MQTT_PORT", "1883")
+	mqttEntryPoint := getEnv("OBSERVER_MQTT_ENTRYPOINT", "/test/meteo")
+	mqttClientID := getEnv("OBSERVER_MQTT_CLIENTID", "observerip-proxy")
+	proxyURL := getEnv("OBSERVER_PROXY_URL", "http://rtupdate.wunderground.com")
+	proxyPath := getEnv("OBSERVER_PROXY_PATH", "/weatherstation/updateweatherstation.php")
+	fmt.Printf("configuration:\n mqtt:\n  broker: %v\n  port: %v\n  entrypoint: %v\n  clientId: %v\n proxy:\n  url: %v\n  path: %v\n http:\n  port: %v\n", mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *httpAddr)
+
+	//changeURL := fmt.Sprintf("%sgo%s", baseChangeURL, *version)
+	http.Handle("/", NewServer(mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath))
 	log.Fatal(http.ListenAndServe(*httpAddr, nil))
+}
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
 // Exported variables for monitoring the server.
@@ -58,70 +75,40 @@ var (
 // It serves the user interface (it's an http.Handler)
 // and polls the remote repository for changes.
 type Server struct {
-	version string
-	url     string
-	period  time.Duration
-
-	mu  sync.RWMutex // protects the yes variable
-	yes bool
+	mqttBroker     string
+	mqttPort       string
+	mqttEntryPoint string
+	mqttClientID   string
+	proxyURL       string
+	proxyPath      string
 }
 
 // NewServer returns an initialized outyet server.
-func NewServer(version, url string, period time.Duration) *Server {
-	s := &Server{version: version, url: url, period: period}
-	go s.poll()
+func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxyURL string, proxyPath string) *Server {
+	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath}
 	return s
-}
-
-// poll polls the change URL for the specified period until the tag exists.
-// Then it sets the Server's yes field true and exits.
-func (s *Server) poll() {
-	for !isTagged(s.url) {
-		pollSleep(s.period)
-	}
-	s.mu.Lock()
-	s.yes = true
-	s.mu.Unlock()
-	pollDone()
-}
-
-// Hooks that may be overridden for integration tests.
-var (
-	pollSleep = time.Sleep
-	pollDone  = func() {}
-)
-
-// isTagged makes an HTTP HEAD request to the given URL and reports whether it
-// returned a 200 OK response.
-func isTagged(url string) bool {
-	pollCount.Add(1)
-	r, err := http.Head(url)
-	if err != nil {
-		log.Print(err)
-		pollError.Set(err.Error())
-		pollErrorCount.Add(1)
-		return false
-	}
-	return r.StatusCode == http.StatusOK
 }
 
 // ServeHTTP implements the HTTP user interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hitCount.Add(1)
-	s.mu.RLock()
-	data := struct {
-		URL     string
-		Version string
-		Yes     bool
-	}{
-		s.url,
-		s.version,
-		s.yes,
-	}
-	s.mu.RUnlock()
-	err := tmpl.Execute(w, data)
-	if err != nil {
-		log.Print(err)
+	if r.Method == http.MethodPost {
+		client := connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
+		client.Publish(fmt.Sprintf("%s/status", s.mqttEntryPoint), 0, true, "1")
+	} else {
+		data := struct {
+			URL     string
+			Version string
+			Yes     bool
+		}{
+			"s.url",
+			"s.version",
+			true,
+		}
+		err := tmpl.Execute(w, data)
+		if err != nil {
+			log.Print(err)
+		}
 	}
 }
 
@@ -138,3 +125,23 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 	</h1>
 </center></body></html>
 `))
+
+// mqtt functions
+func connect(clientID string, host string, port string) mqtt.Client {
+	opts := createClientOptions(clientID, host, port)
+	client := mqtt.NewClient(opts)
+	token := client.Connect()
+	for !token.WaitTimeout(3 * time.Second) {
+	}
+	if err := token.Error(); err != nil {
+		log.Fatal(err)
+	}
+	return client
+}
+
+func createClientOptions(clientID string, host string, port string) *mqtt.ClientOptions {
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(fmt.Sprintf("tcp://%s", host))
+	opts.SetClientID(clientID)
+	return opts
+}

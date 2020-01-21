@@ -16,7 +16,8 @@ RUN adduser \
     --shell "/sbin/nologin" \    
     --no-create-home \    
     --uid "${UID}" \    
-    "${USER}"WORKDIR $GOPATH/src/glarfs/observerip/
+    "${USER}"
+WORKDIR $GOPATH/src/glarfs/observerip/
 COPY . .
 # Fetch dependencies.
 # Using go get.
