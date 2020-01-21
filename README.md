@@ -1,26 +1,40 @@
-[![Docker Pulls](https://img.shields.io/docker/pulls/glarfs/observerip-mqtt.svg)](https://hub.docker.com/r/glarfs/docker-observerip-mqtt/)
-[![license](https://img.shields.io/github/license/glarfs/docker-observerip-mqtt.svg)](https://github.com/glarfs/docker-observerip-mqtt/blob/master/LICENSE)
-# docker-observer-mqtt
+[![Docker Pulls](https://img.shields.io/docker/pulls/glarfs/observerip-proxy-mqtt.svg)](https://hub.docker.com/r/glarfs/docker-observerip-proxy-mqtt/)
+[![license](https://img.shields.io/github/license/glarfs/docker-observerip-proxy-mqtt.svg)](https://github.com/glarfs/docker-observerip-proxy-mqtt/blob/master/LICENSE)
+# docker-observer-proxy-mqtt
 
-Scrapps the web of observer ip and publishes changes on mqtt
+Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt.
+
+Based on projects: 
+* [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt)
+* [matthewwall/weewx-observerip]https://github.com/matthewwall/weewx-observerip)
 
 
 # Build
 
 ```
-docker build -t glarfs/observerip-mqtt .
+docker build -t glarfs/observerip-proxy-mqtt .
 ```
 
 # Run
 
+Requisites in your local network:
+* observerip weather station (y.y.y.y)
+* mqtt server (x.x.x.x)
+* server with docker (z.z.z.z)
+
+Run the following command remplacing the variables:
+
+```
+docker run -p 8080:8080 -e OBSERVER_MQTT_HOST=x.x.x.x -e OBSERVER_MQTT_PORT=1883 -e OBSERVER_MQTT_ENTRYPOINT=my/meteo glarfs/observer-proxy-mqtt
 ```
 
-docker run -e OBSERVER_MQTT_HOST=x.x.x.x -e OBSERVER_MQTT_PORT=1883 -e OBSERVER_MQTT_ENTRYPOINT=my/meteo -e OBSERVER_HOST=x.x.x.y glarfs/observer-mqtt
-```
+Modify the endpoint on the observerip administration page(http://y.y.y.y) to go to http://[z.z.z.z]:8080/weatherstation/updateweatherstation.php
 
 
 # Test
 
+To test application connect the mosquitto client to your mqtt server:
 ```
 mosquitto_sub -v -h x.x.x.x -t my/meteo/#
 ```
+This will show the values pushed to proxy server
