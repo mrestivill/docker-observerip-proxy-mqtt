@@ -26,7 +26,7 @@ RUN go get -d -v
 # RUN go mod download
 # RUN go mod verify
 # Build the binary.
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/observerip-proxy
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /observerip-proxy
 ############################
 # STEP 2 build a small image
 ############################
@@ -35,10 +35,11 @@ FROM scratch
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 # Copy our static executable.
-COPY --from=builder /go/bin/observerip-proxy /go/bin/observerip-proxy
+COPY --from=builder /observerip-proxy /observerip-proxy
 # Use an unprivileged user.
 USER appuser:appuser
 # expose 8080 port
 EXPOSE 8080
+VOLUME ["/tmp"]
 # Run the hello binary.
-ENTRYPOINT ["/go/bin/observerip-proxy"]
+ENTRYPOINT ["/observerip-proxy"]
