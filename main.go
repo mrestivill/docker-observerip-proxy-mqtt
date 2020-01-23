@@ -26,8 +26,8 @@ var (
 )
 
 const mph2kph float64 = 1.60934
-const projectVersion string = "v0.0.4"
-const projectUrl string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
+const projectVersion string = "v0.0.5"
+const projectURL string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
 
 func main() {
 	flag.Parse()
@@ -191,13 +191,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(pBody))
 	} else {
 		data := struct {
-			URL     string
-			Version string
-			Description string,
+			URL         string
+			Version     string
+			Description string
 		}{
-			projectUrl,
+			projectURL,
 			projectVersion,
-			"observerip-proxy-mqtt is a web server obtains data from observerip weather station and pushed it to an mqtt server."
+			"observerip-proxy-mqtt is a web server obtains data from observerip weather station and pushed it to an mqtt server.",
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8") // normal header
 		err := tmpl.Execute(w, data)
