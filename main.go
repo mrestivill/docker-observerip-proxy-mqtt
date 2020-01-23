@@ -246,13 +246,13 @@ func publishParameter(client mqtt.Client, entryPoint string, qos byte, retain bo
 }
 
 func getParameter(r *http.Request, key string, required bool) string {
-	keys, ok := r.URL.Query()[key]
+	value, ok := r.URL.Query()[key]
 
-	if (!ok || len(keys[0]) < 1) && required {
+	if (!ok || len(value[0]) < 1) && required {
 		log.Println("Url required Param '%s' is missing", key)
 		return ""
 	}
-	return key
+	return value[0]
 }
 
 // mqtt functions
