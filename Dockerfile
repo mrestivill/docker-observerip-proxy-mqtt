@@ -4,11 +4,17 @@
 FROM golang as builder
 WORKDIR /work
 ADD . .
+RUN go get -d -v
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /observerip-proxy .
 #
 # Step #2: Copy the executable into a minimal image (less than 5MB) 
 #         which doesn't contain the build tools and artifacts
 FROM alpine:latest  
+ARG USERNAME=app
+ARG GROUP=app
+
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /observerip-proxy /observerip-proxy
+RUN addgroup -S ${GROUP}  && adduser -S -G ${GROUP} ${USERNAME}  
+USER ${USERNAME}
 CMD ["/observerip-proxy"] 
