@@ -72,12 +72,26 @@ type Server struct {
 	mqttClientID   string
 	proxyURL       string
 	proxyPath      string
+
+	client mqtt.Client
 }
 
 // NewServer returns an initialized outyet server.
 func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxyURL string, proxyPath string) *Server {
-	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath}
+	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath, client: nil}
 	return s
+}
+
+func (s *Server) publishParameterConv(entryPoint string, qos byte, retain bool, value string, fn convert) {
+	val, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		log.Print(err)
+	} else {
+		s.client.Publish(entryPoint, qos, true, float64(fn(val)))
+	}
+}
+func (s *Server) publishParameter(entryPoint string, qos byte, retain bool, value string) {
+	s.publishParameterConv(entryPoint, qos, retain, value, noConvert)
 }
 
 // ServeHTTP implements the HTTP user interface.
@@ -91,8 +105,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		//password := getParameter(r, "PASSWORD", true)
 
 		// connect to mqtt
-		client := connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
-		if client != nil {
+		if s.client == nil || !s.client.IsConnected() {
+			s.client = connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
+		}
+
+		if s.client != nil && s.client.IsConnected() {
 			log.Printf("send data to mqtt server: %s:%s %s\n ", s.mqttBroker, s.mqttPort, s.mqttEntryPoint)
 			//obtain data
 			tempf := getParameter(r, "tempf", true)
@@ -122,49 +139,49 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			//rtfreq := getParameter(r, "rtfreq", true)
 
 			// publish the results
-			client.Publish(fmt.Sprintf("%s/status", s.mqttEntryPoint), 0, true, "1")
+			s.client.Publish(fmt.Sprintf("%s/status", s.mqttEntryPoint), 0, true, "1")
 			//TODO calculate
-			publishParameter(client, fmt.Sprintf("%s/solar/uvi", s.mqttEntryPoint), 0, false, uv)
-			publishParameter(client, fmt.Sprintf("%s/solar/uv", s.mqttEntryPoint), 0, false, uv)
-			publishParameter(client, fmt.Sprintf("%s/solar/solarradiation", s.mqttEntryPoint), 0, false, solarradiation)
-			publishParameter(client, fmt.Sprintf("%s/absPressure", s.mqttEntryPoint), 0, false, baromin)
+			s.publishParameter(fmt.Sprintf("%s/solar/uvi", s.mqttEntryPoint), 0, false, uv)
+			s.publishParameter(fmt.Sprintf("%s/solar/uv", s.mqttEntryPoint), 0, false, uv)
+			s.publishParameter(fmt.Sprintf("%s/solar/solarradiation", s.mqttEntryPoint), 0, false, solarradiation)
+			s.publishParameter(fmt.Sprintf("%s/absPressure", s.mqttEntryPoint), 0, false, baromin)
 			//TODO calculate
-			publishParameter(client, fmt.Sprintf("%s/relPressure", s.mqttEntryPoint), 0, false, baromin)
-			publishParameter(client, fmt.Sprintf("%s/win/dir", s.mqttEntryPoint), 0, false, winddir)
-			publishParameterConv(client, fmt.Sprintf("%s/win/speed", s.mqttEntryPoint), 0, false, windspeedmph, mph2kphConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/win/gust", s.mqttEntryPoint), 0, false, windgustmph, mph2kphConvert)
-			publishParameter(client, fmt.Sprintf("%s/in/humid", s.mqttEntryPoint), 0, false, indoorhumidity)
-			publishParameter(client, fmt.Sprintf("%s/out/humid", s.mqttEntryPoint), 0, false, humidity)
-			publishParameterConv(client, fmt.Sprintf("%s/in/temp", s.mqttEntryPoint), 0, false, indoortempf, fahrenheit2CelsiusConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/out/temp", s.mqttEntryPoint), 0, false, tempf, fahrenheit2CelsiusConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/out/dewpoint", s.mqttEntryPoint), 0, false, dewptf, fahrenheit2CelsiusConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/out/windchill", s.mqttEntryPoint), 0, false, windchillf, fahrenheit2CelsiusConvert)
+			s.publishParameter(fmt.Sprintf("%s/relPressure", s.mqttEntryPoint), 0, false, baromin)
+			s.publishParameter(fmt.Sprintf("%s/win/dir", s.mqttEntryPoint), 0, false, winddir)
+			s.publishParameterConv(fmt.Sprintf("%s/win/speed", s.mqttEntryPoint), 0, false, windspeedmph, mph2kphConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/win/gust", s.mqttEntryPoint), 0, false, windgustmph, mph2kphConvert)
+			s.publishParameter(fmt.Sprintf("%s/in/humid", s.mqttEntryPoint), 0, false, indoorhumidity)
+			s.publishParameter(fmt.Sprintf("%s/out/humid", s.mqttEntryPoint), 0, false, humidity)
+			s.publishParameterConv(fmt.Sprintf("%s/in/temp", s.mqttEntryPoint), 0, false, indoortempf, fahrenheit2CelsiusConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/out/temp", s.mqttEntryPoint), 0, false, tempf, fahrenheit2CelsiusConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/out/dewpoint", s.mqttEntryPoint), 0, false, dewptf, fahrenheit2CelsiusConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/out/windchill", s.mqttEntryPoint), 0, false, windchillf, fahrenheit2CelsiusConvert)
 
-			publishParameter(client, fmt.Sprintf("%s/rain/houry", s.mqttEntryPoint), 0, false, rainin)
-			publishParameter(client, fmt.Sprintf("%s/rain/daily", s.mqttEntryPoint), 0, false, dailyrainin)
-			publishParameter(client, fmt.Sprintf("%s/rain/weekly", s.mqttEntryPoint), 0, false, weeklyrainin)
-			publishParameter(client, fmt.Sprintf("%s/rain/monthly", s.mqttEntryPoint), 0, false, monthlyrainin)
-			publishParameter(client, fmt.Sprintf("%s/rain/yearly", s.mqttEntryPoint), 0, false, yearlyrainin)
-			client.Publish(fmt.Sprintf("%s/info", s.mqttEntryPoint), 0, false, softwaretype)
+			s.publishParameter(fmt.Sprintf("%s/rain/houry", s.mqttEntryPoint), 0, false, rainin)
+			s.publishParameter(fmt.Sprintf("%s/rain/daily", s.mqttEntryPoint), 0, false, dailyrainin)
+			s.publishParameter(fmt.Sprintf("%s/rain/weekly", s.mqttEntryPoint), 0, false, weeklyrainin)
+			s.publishParameter(fmt.Sprintf("%s/rain/monthly", s.mqttEntryPoint), 0, false, monthlyrainin)
+			s.publishParameter(fmt.Sprintf("%s/rain/yearly", s.mqttEntryPoint), 0, false, yearlyrainin)
+			s.client.Publish(fmt.Sprintf("%s/info", s.mqttEntryPoint), 0, false, softwaretype)
 			// WeeWx compatible Mqtt
-			publishParameterConv(client, fmt.Sprintf("%s/inTemp_C", s.mqttEntryPoint), 0, false, indoortempf, fahrenheit2CelsiusConvert)
-			publishParameter(client, fmt.Sprintf("%s/inHumidity", s.mqttEntryPoint), 0, false, indoorhumidity)
-			publishParameterConv(client, fmt.Sprintf("%s/outTemp_C", s.mqttEntryPoint), 0, false, tempf, fahrenheit2CelsiusConvert)
-			publishParameter(client, fmt.Sprintf("%s/outHumidity", s.mqttEntryPoint), 0, false, humidity)
-			publishParameterConv(client, fmt.Sprintf("%s/dewpoint_C", s.mqttEntryPoint), 0, false, dewptf, fahrenheit2CelsiusConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/windchill_C", s.mqttEntryPoint), 0, false, windchillf, fahrenheit2CelsiusConvert)
-			publishParameterConv(client, fmt.Sprintf("%s/windSpeed_kph", s.mqttEntryPoint), 0, false, windspeedmph, mph2kphConvert)
-			publishParameter(client, fmt.Sprintf("%s/windDir", s.mqttEntryPoint), 0, false, winddir)
-			publishParameterConv(client, fmt.Sprintf("%s/windGust_kph", s.mqttEntryPoint), 0, false, windgustmph, mph2kphConvert)
-			publishParameter(client, fmt.Sprintf("%s/radiation_Wpm2", s.mqttEntryPoint), 0, false, solarradiation)
-			publishParameter(client, fmt.Sprintf("%s/illuminance", s.mqttEntryPoint), 0, false, uv)
-			publishParameter(client, fmt.Sprintf("%s/UV", s.mqttEntryPoint), 0, false, uv)
-			publishParameter(client, fmt.Sprintf("%s/rainRate_cm_per_hour", s.mqttEntryPoint), 0, false, rainin)
-			publishParameter(client, fmt.Sprintf("%s/dayRain_cm", s.mqttEntryPoint), 0, false, dailyrainin)
-			publishParameter(client, fmt.Sprintf("%s/pressure_mbar", s.mqttEntryPoint), 0, false, baromin)
+			s.publishParameterConv(fmt.Sprintf("%s/inTemp_C", s.mqttEntryPoint), 0, false, indoortempf, fahrenheit2CelsiusConvert)
+			s.publishParameter(fmt.Sprintf("%s/inHumidity", s.mqttEntryPoint), 0, false, indoorhumidity)
+			s.publishParameterConv(fmt.Sprintf("%s/outTemp_C", s.mqttEntryPoint), 0, false, tempf, fahrenheit2CelsiusConvert)
+			s.publishParameter(fmt.Sprintf("%s/outHumidity", s.mqttEntryPoint), 0, false, humidity)
+			s.publishParameterConv(fmt.Sprintf("%s/dewpoint_C", s.mqttEntryPoint), 0, false, dewptf, fahrenheit2CelsiusConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/windchill_C", s.mqttEntryPoint), 0, false, windchillf, fahrenheit2CelsiusConvert)
+			s.publishParameterConv(fmt.Sprintf("%s/windSpeed_kph", s.mqttEntryPoint), 0, false, windspeedmph, mph2kphConvert)
+			s.publishParameter(fmt.Sprintf("%s/windDir", s.mqttEntryPoint), 0, false, winddir)
+			s.publishParameterConv(fmt.Sprintf("%s/windGust_kph", s.mqttEntryPoint), 0, false, windgustmph, mph2kphConvert)
+			s.publishParameter(fmt.Sprintf("%s/radiation_Wpm2", s.mqttEntryPoint), 0, false, solarradiation)
+			s.publishParameter(fmt.Sprintf("%s/illuminance", s.mqttEntryPoint), 0, false, uv)
+			s.publishParameter(fmt.Sprintf("%s/UV", s.mqttEntryPoint), 0, false, uv)
+			s.publishParameter(fmt.Sprintf("%s/rainRate_cm_per_hour", s.mqttEntryPoint), 0, false, rainin)
+			s.publishParameter(fmt.Sprintf("%s/dayRain_cm", s.mqttEntryPoint), 0, false, dailyrainin)
+			s.publishParameter(fmt.Sprintf("%s/pressure_mbar", s.mqttEntryPoint), 0, false, baromin)
 			//TODO convert
-			publishParameter(client, fmt.Sprintf("%s/altimeter_mbar", s.mqttEntryPoint), 0, false, baromin)
-			publishParameter(client, fmt.Sprintf("%s/outBatteryStatus", s.mqttEntryPoint), 0, false, lowbatt)
+			s.publishParameter(fmt.Sprintf("%s/altimeter_mbar", s.mqttEntryPoint), 0, false, baromin)
+			s.publishParameter(fmt.Sprintf("%s/outBatteryStatus", s.mqttEntryPoint), 0, false, lowbatt)
 
 		} else {
 			log.Fatalf("connection failed to mqtt server: %s port: %s\n", s.mqttBroker, s.mqttPort)
@@ -232,18 +249,6 @@ func mph2kphConvert(f float64) float64 {
 }
 func noConvert(f float64) float64 {
 	return float64(f)
-}
-
-func publishParameterConv(client mqtt.Client, entryPoint string, qos byte, retain bool, value string, fn convert) {
-	val, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		log.Print(err)
-	} else {
-		client.Publish(entryPoint, qos, true, float64(fn(val)))
-	}
-}
-func publishParameter(client mqtt.Client, entryPoint string, qos byte, retain bool, value string) {
-	publishParameterConv(client, entryPoint, qos, retain, value, noConvert)
 }
 
 func getParameter(r *http.Request, key string, required bool) string {
