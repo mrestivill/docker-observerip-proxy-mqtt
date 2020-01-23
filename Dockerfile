@@ -4,6 +4,7 @@
 FROM golang as builder
 WORKDIR /work
 ADD . .
+RUN go get -d -v
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /observerip-proxy .
 #
 # Step #2: Copy the executable into a minimal image (less than 5MB) 
