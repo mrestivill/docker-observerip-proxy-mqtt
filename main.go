@@ -26,7 +26,7 @@ var (
 )
 
 const mph2kph float64 = 1.60934
-const projectVersion string = "v0.0.8"
+const projectVersion string = "v0.0.9"
 const projectURL string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
 
 func main() {
@@ -234,8 +234,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusTeapot)
 			log.Print(err)
-		} else {
-			w.WriteHeader(http.StatusOK)
 		}
 
 	}
