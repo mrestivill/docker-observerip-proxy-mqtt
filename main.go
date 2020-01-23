@@ -21,12 +21,11 @@ import (
 
 // Command-line flags.
 var (
-	httpAddr   = flag.String("http", ":8080", "Listen address")
-	pollPeriod = flag.Duration("poll", 5*time.Second, "Poll period")
+	httpAddr = flag.String("http", ":8080", "Listen address")
 )
 
 const mph2kph float64 = 1.60934
-const projectVersion string = "v0.0.7"
+const projectVersion string = "v0.0.8"
 const projectURL string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
 
 func main() {

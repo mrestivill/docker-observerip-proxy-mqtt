@@ -40,6 +40,5 @@ USER appuser:appuser
 COPY --from=builder /observerip-proxy /observerip-proxy
 # expose 8080 port
 EXPOSE 8080
-VOLUME ["/tmp"]
 # Run the hello binary.
 ENTRYPOINT ["/observerip-proxy"]
