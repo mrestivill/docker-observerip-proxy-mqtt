@@ -10,11 +10,18 @@ Based on projects:
 
 
 # Build
+
+Using local golang:
 ```
+//dependencies
+go get -d -v
+// build
 go build -i -o proxy
+//execute
 ./proxy
 ```
 
+Using docker:
 ```
 docker build -t glarfs/observerip-proxy-mqtt .
 ```
