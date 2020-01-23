@@ -93,7 +93,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// connect to mqtt
 		client := connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
 		if client != nil {
-			log.Printf("send data to mqtt server: %s:%s\n ", s.mqttBroker, s.mqttPort)
+			log.Printf("send data to mqtt server: %s:%s %s\n ", s.mqttBroker, s.mqttPort, s.mqttEntryPoint)
 			//obtain data
 			tempf := getParameter(r, "tempf", true)
 			humidity := getParameter(r, "humidity", true)
