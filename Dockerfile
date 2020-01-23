@@ -17,4 +17,5 @@ RUN apk --no-cache add ca-certificates
 COPY --from=builder /observerip-proxy /observerip-proxy
 RUN addgroup -S ${GROUP}  && adduser -S -G ${GROUP} ${USERNAME}  
 USER ${USERNAME}
+EXPOSE 8080
 CMD ["/observerip-proxy"] 
