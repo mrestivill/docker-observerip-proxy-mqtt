@@ -26,7 +26,7 @@ var (
 )
 
 const mph2kph float64 = 1.60934
-const projectVersion string = "v0.0.5"
+const projectVersion string = "v0.0.6"
 const projectURL string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
 
 func main() {
