@@ -10,6 +10,10 @@ Based on projects:
 
 
 # Build
+```
+go build -i -o proxy
+./proxy
+```
 
 ```
 docker build -t glarfs/observerip-proxy-mqtt .
@@ -25,7 +29,7 @@ Requisites in your local network:
 Run the following command remplacing the variables:
 
 ```
-docker run -p 8080:8080 -e OBSERVER_MQTT_HOST=x.x.x.x -e OBSERVER_MQTT_PORT=1883 -e OBSERVER_MQTT_ENTRYPOINT=my/meteo glarfs/observer-proxy-mqtt
+docker run -p 8080:8080 -e OBSERVER_MQTT_HOST=x.x.x.x -e OBSERVER_MQTT_PORT=1883 -e OBSERVER_MQTT_ENTRYPOINT=my/meteo glarfs/observerip-proxy-mqtt
 ```
 
 Modify the endpoint on the observerip administration page(http://y.y.y.y) to go to http://[z.z.z.z]:8080/weatherstation/updateweatherstation.php

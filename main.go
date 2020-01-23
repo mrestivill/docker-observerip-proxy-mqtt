@@ -23,10 +23,11 @@ import (
 var (
 	httpAddr   = flag.String("http", ":8080", "Listen address")
 	pollPeriod = flag.Duration("poll", 5*time.Second, "Poll period")
-	version    = flag.String("version", "1.4", "Go version")
 )
 
 const mph2kph float64 = 1.60934
+const projectVersion string = "v0.0.4"
+const projectUrl string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
 
 func main() {
 	flag.Parse()
@@ -166,19 +167,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			publishParameter(client, fmt.Sprintf("%s/outBatteryStatus", s.mqttEntryPoint), 0, false, lowbatt)
 
 		} else {
-			log.Println("connection failed to mqtt server: %s port: %s", s.mqttBroker, s.mqttPort)
+			log.Fatalln("connection failed to mqtt server: %s port: %s", s.mqttBroker, s.mqttPort)
 		}
 		//proxy connection to wunderground
 		pBody := "success"
 		log.Println("proxing to url: %s", s.proxyURL+r.RequestURI)
 		pr, err := http.Get(s.proxyURL + r.RequestURI)
 		if err != nil {
-			log.Println("error proxy connection: %v", err)
+			log.Fatalln("error proxy connection: %v", err)
 		} else {
 			defer pr.Body.Close()
 			body, err := ioutil.ReadAll(pr.Body)
 			if err != nil {
-				log.Println("error proxy reading: %v", err)
+				log.Fatalln("error proxy reading: %v", err)
 			} else {
 				pBody = string(body)
 			}
@@ -192,11 +193,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			URL     string
 			Version string
-			Yes     bool
+			Description string,
 		}{
-			"s.url",
-			"s.version",
-			true,
+			projectUrl,
+			projectVersion,
+			"observerip-proxy-mqtt is a web server obtains data from observerip weather station and pushed it to an mqtt server."
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8") // normal header
 		err := tmpl.Execute(w, data)
@@ -213,14 +214,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // tmpl is the HTML template that drives the user interface.
 var tmpl = template.Must(template.New("tmpl").Parse(`
 <!DOCTYPE html><html><body><center>
-	<h2>Is Go {{.Version}} out yet?</h2>
-	<h1>
-	{{if .Yes}}
-		<a href="{{.URL}}">YES!</a>
-	{{else}}
-		No. :-(
-	{{end}}
+	<h2>observerip-proxy-mqtt {{.Version}} </h2>
+	<h1>	
+		<a href="{{.URL}}">github</a>	
 	</h1>
+	<p>{{.Description}}</p>
 </center></body></html>
 `))
 
