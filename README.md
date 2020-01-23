@@ -16,9 +16,9 @@ Using local golang:
 //dependencies
 go get -d -v
 // build
-go build -i -o proxy
+go build -i -o bin/proxy
 //execute
-./proxy
+./bin/proxy
 ```
 
 Using docker:
