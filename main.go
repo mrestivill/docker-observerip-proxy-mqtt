@@ -83,7 +83,7 @@ func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID 
 // ServeHTTP implements the HTTP user interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hitCount.Add(1)
-	log.Println("method: %s, uri: %s, ip: %s, user-agent: %s \n", r.Method, r.RequestURI, r.RemoteAddr, r.Header.Get("User-Agent"))
+	log.Printf("method: %s, uri: %s, ip: %s, user-agent: %s \n", r.Method, r.RequestURI, r.RemoteAddr, r.Header.Get("User-Agent"))
 	if r.Method == http.MethodGet && strings.Contains(r.RequestURI, "updateweatherstation") {
 
 		//?ID=XXXXX5&PASSWORD=******&tempf=51.1&humidity=99&dewptf=50.9&windchillf=51.1&winddir=262&windspeedmph=2.24&windgustmph=4.92&rainin=0.00&dailyrainin=0.00&weeklyrainin=0.00&monthlyrainin=0.00&yearlyrainin=0.00&solarradiation=28.78&UV=1&indoortempf=60.4&indoorhumidity=69&baromin=29.93&lowbatt=0&dateutc=2020-1-22%208:22:34&softwaretype=Weather%20logger%20V2.2.2&action=updateraw&realtime=1&rtfreq=5
@@ -93,7 +93,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// connect to mqtt
 		client := connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
 		if client != nil {
-			log.Println("send data to mqtt server: %s port: %s", s.mqttBroker, s.mqttPort)
+			log.Printf("send data to mqtt server: %s:%s\n ", s.mqttBroker, s.mqttPort)
 			//obtain data
 			tempf := getParameter(r, "tempf", true)
 			humidity := getParameter(r, "humidity", true)
@@ -145,7 +145,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			publishParameter(client, fmt.Sprintf("%s/rain/weekly", s.mqttEntryPoint), 0, false, weeklyrainin)
 			publishParameter(client, fmt.Sprintf("%s/rain/monthly", s.mqttEntryPoint), 0, false, monthlyrainin)
 			publishParameter(client, fmt.Sprintf("%s/rain/yearly", s.mqttEntryPoint), 0, false, yearlyrainin)
-			publishParameter(client, fmt.Sprintf("%s/info", s.mqttEntryPoint), 0, false, softwaretype)
+			client.Publish(fmt.Sprintf("%s/info", s.mqttEntryPoint), 0, false, softwaretype)
 			// WeeWx compatible Mqtt
 			publishParameterConv(client, fmt.Sprintf("%s/inTemp_C", s.mqttEntryPoint), 0, false, indoortempf, fahrenheit2CelsiusConvert)
 			publishParameter(client, fmt.Sprintf("%s/inHumidity", s.mqttEntryPoint), 0, false, indoorhumidity)
@@ -167,19 +167,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			publishParameter(client, fmt.Sprintf("%s/outBatteryStatus", s.mqttEntryPoint), 0, false, lowbatt)
 
 		} else {
-			log.Fatalln("connection failed to mqtt server: %s port: %s", s.mqttBroker, s.mqttPort)
+			log.Fatalf("connection failed to mqtt server: %s port: %s\n", s.mqttBroker, s.mqttPort)
 		}
 		//proxy connection to wunderground
 		pBody := "success"
-		log.Println("proxing to url: %s", s.proxyURL+r.RequestURI)
+		log.Printf("proxing to url: %s%s\n", s.proxyURL, r.RequestURI)
 		pr, err := http.Get(s.proxyURL + r.RequestURI)
 		if err != nil {
-			log.Fatalln("error proxy connection: %v", err)
+			log.Fatalf("error proxy connection: %v\n", err)
 		} else {
 			defer pr.Body.Close()
 			body, err := ioutil.ReadAll(pr.Body)
 			if err != nil {
-				log.Fatalln("error proxy reading: %v", err)
+				log.Fatalf("error proxy reading: %v\n", err)
 			} else {
 				pBody = string(body)
 			}
@@ -199,6 +199,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			projectVersion,
 			"observerip-proxy-mqtt is a web server obtains data from observerip weather station and pushed it to an mqtt server.",
 		}
+		log.Printf("web page test: %s\n", r.RequestURI)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8") // normal header
 		err := tmpl.Execute(w, data)
 		if err != nil {
@@ -249,7 +250,7 @@ func getParameter(r *http.Request, key string, required bool) string {
 	value, ok := r.URL.Query()[key]
 
 	if (!ok || len(value[0]) < 1) && required {
-		log.Println("Url required Param '%s' is missing", key)
+		log.Printf("Url required Param '%s' is missing\n", key)
 		return ""
 	}
 	return value[0]
