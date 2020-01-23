@@ -6,7 +6,7 @@ Publishes a web server (golang) with a path /weatherstation/updateweatherstation
 
 Based on projects: 
 * [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt)
-* [matthewwall/weewx-observerip]https://github.com/matthewwall/weewx-observerip)
+* [matthewwall/weewx-observerip](https://github.com/matthewwall/weewx-observerip)
 
 
 # Build
