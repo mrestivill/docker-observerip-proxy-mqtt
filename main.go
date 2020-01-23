@@ -87,7 +87,11 @@ func (s *Server) publishParameterConv(entryPoint string, qos byte, retain bool, 
 	if err != nil {
 		log.Print(err)
 	} else {
-		s.client.Publish(entryPoint, qos, true, float64(fn(val)))
+		if s.client.IsConnected() {
+			mqValue := fmt.Sprintf("%.1f", fn(val))
+			log.Printf("entrypoint: %s, calus: %s \n", entryPoint, mqValue)
+			s.client.Publish(entryPoint, qos, retain, mqValue)
+		}
 	}
 }
 func (s *Server) publishParameter(entryPoint string, qos byte, retain bool, value string) {
