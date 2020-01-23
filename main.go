@@ -22,6 +22,7 @@ import (
 // Command-line flags.
 var (
 	httpAddr = flag.String("http", ":8080", "Listen address")
+	verbose  = flag.Bool("v", false, "Verbose log")
 )
 
 const mph2kph float64 = 1.60934
@@ -37,10 +38,10 @@ func main() {
 	mqttClientID := getEnv("OBSERVER_MQTT_CLIENTID", "observerip-proxy")
 	proxyURL := getEnv("OBSERVER_PROXY_URL", "http://rtupdate.wunderground.com")
 	proxyPath := getEnv("OBSERVER_PROXY_PATH", "/weatherstation/updateweatherstation.php")
-	fmt.Printf("configuration:\n mqtt:\n  broker: %v\n  port: %v\n  entrypoint: %v\n  clientId: %v\n proxy:\n  url: %v\n  path: %v\n http:\n  port: %v\n", mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *httpAddr)
+	fmt.Printf("configuration:\n verbose: %v\n mqtt:\n  broker: %v\n  port: %v\n  entrypoint: %v\n  clientId: %v\n proxy:\n  url: %v\n  path: %v\n http:\n  port: %v\n", *verbose, mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *httpAddr)
 
 	//changeURL := fmt.Sprintf("%sgo%s", baseChangeURL, *version)
-	http.Handle("/", NewServer(mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath))
+	http.Handle("/", NewServer(mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *verbose))
 	log.Fatal(http.ListenAndServe(*httpAddr, nil))
 }
 func getEnv(key, fallback string) string {
@@ -71,13 +72,14 @@ type Server struct {
 	mqttClientID   string
 	proxyURL       string
 	proxyPath      string
+	verbose        bool
 
 	client mqtt.Client
 }
 
 // NewServer returns an initialized outyet server.
-func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxyURL string, proxyPath string) *Server {
-	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath, client: nil}
+func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxyURL string, proxyPath string, verbose bool) *Server {
+	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath, verbose: verbose, client: nil}
 	return s
 }
 
@@ -88,7 +90,9 @@ func (s *Server) publishParameterConv(entryPoint string, qos byte, retain bool, 
 	} else {
 		if s.client.IsConnected() {
 			mqValue := fmt.Sprintf("%.1f", fn(val))
-			log.Printf("entrypoint: %s, calus: %s \n", entryPoint, mqValue)
+			if s.verbose {
+				log.Printf("entrypoint: %s, calus: %s \n", entryPoint, mqValue)
+			}
 			s.client.Publish(entryPoint, qos, retain, mqValue)
 		}
 	}
@@ -100,7 +104,9 @@ func (s *Server) publishParameter(entryPoint string, qos byte, retain bool, valu
 // ServeHTTP implements the HTTP user interface.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hitCount.Add(1)
-	log.Printf("method: %s, uri: %s, ip: %s, user-agent: %s \n", r.Method, r.RequestURI, r.RemoteAddr, r.Header.Get("User-Agent"))
+	if s.verbose {
+		log.Printf("method: %s, uri: %s, ip: %s, user-agent: %s \n", r.Method, r.RequestURI, r.RemoteAddr, r.Header.Get("User-Agent"))
+	}
 	if r.Method == http.MethodGet && strings.Contains(r.RequestURI, "updateweatherstation") {
 
 		//?ID=XXXXX5&PASSWORD=******&tempf=51.1&humidity=99&dewptf=50.9&windchillf=51.1&winddir=262&windspeedmph=2.24&windgustmph=4.92&rainin=0.00&dailyrainin=0.00&weeklyrainin=0.00&monthlyrainin=0.00&yearlyrainin=0.00&solarradiation=28.78&UV=1&indoortempf=60.4&indoorhumidity=69&baromin=29.93&lowbatt=0&dateutc=2020-1-22%208:22:34&softwaretype=Weather%20logger%20V2.2.2&action=updateraw&realtime=1&rtfreq=5
@@ -110,6 +116,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// connect to mqtt
 		if s.client == nil || !s.client.IsConnected() {
 			s.client = connect(s.mqttClientID, s.mqttBroker, s.mqttPort)
+			if s.verbose {
+				log.Printf("connected to mqtt :%s %s %s\n", s.mqttBroker, s.mqttPort, s.mqttEntryPoint)
+			}
 		}
 
 		if s.client != nil && s.client.IsConnected() {
