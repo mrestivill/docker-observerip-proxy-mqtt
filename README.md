@@ -1,6 +1,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/glarfs/observerip-proxy-mqtt.svg)](https://hub.docker.com/r/glarfs/observerip-proxy-mqtt/)
 [![license](https://img.shields.io/github/license/glarfs/docker-observerip-proxy-mqtt.svg)](https://github.com/glarfs/docker-observerip-proxy-mqtt/blob/master/LICENSE)
-# docker-observer-proxy-mqtt
+# docker-observerip-proxy-mqtt
 
 Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt.
 
