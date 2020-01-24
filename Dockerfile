@@ -5,7 +5,7 @@ FROM golang as builder
 WORKDIR /work
 ADD . .
 RUN go get -d -v
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /observerip-proxy .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /observerip-proxy .
 #
 # Step #2: Copy the executable into a minimal image (less than 5MB) 
 #         which doesn't contain the build tools and artifacts
@@ -18,4 +18,4 @@ COPY --from=builder /observerip-proxy /observerip-proxy
 RUN addgroup -S ${GROUP}  && adduser -S -G ${GROUP} ${USERNAME}  
 USER ${USERNAME}
 EXPOSE 8080
-CMD ["/observerip-proxy"] 
+ENTRYPOINT ["/observerip-proxy"] 
