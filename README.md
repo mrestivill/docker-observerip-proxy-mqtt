@@ -24,6 +24,20 @@ go build -i -o bin/proxy
 Using docker:
 ```
 docker build -t glarfs/observerip-proxy-mqtt .
+
+//docker login to docker-hub
+docker login
+//username and password
+docker push glarfs/observerip-proxy-mqtt
+```
+
+Using docker (multiarchitecture)
+```
+//enable docker experimental features
+//docker login to docker-hub
+docker login
+//username and password
+docker buildx build -t glarfs/observerip-proxy-mqtt --platform=linux/arm,linux/arm64,linux/amd64 . --push
 ```
 
 # Run
