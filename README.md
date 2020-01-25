@@ -2,11 +2,12 @@
 [![license](https://img.shields.io/github/license/glarfs/docker-observerip-proxy-mqtt.svg)](https://github.com/glarfs/docker-observerip-proxy-mqtt/blob/master/LICENSE)
 # docker-observerip-proxy-mqtt
 
-Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt.
+Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt. The topics used on mqtt are compatible with [WeeWx weather software](https://github.com/weewx/weewx).
 
 Based on projects: 
-* [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt)
-* [matthewwall/weewx-observerip](https://github.com/matthewwall/weewx-observerip)
+* [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt) old scrapping version for observerip, compatible environment variables with this project
+* [matthewwall/weewx-observerip](https://github.com/matthewwall/weewx-observerip) php proxy server connected to weewx
+* [weewx/mqtt](https://github.com/weewx/weewx/wiki/mqtt) weewx mqtt variables
 
 
 # Build
@@ -62,4 +63,6 @@ To test application connect the mosquitto client to your mqtt server:
 ```
 mosquitto_sub -v -h x.x.x.x -t my/meteo/#
 ```
-This will show the values pushed to proxy server
+This will show the values pushed to mqtt server
+
+The names used as mqtt topics are compatible with weewx/mqtt
