@@ -194,13 +194,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			//TODO calculate
 			_ = s.publishParameter(fmt.Sprintf("%s/solar/uvi", s.mqttEntryPoint), 0, false, uv, s.oldUv)
 			s.oldUv = s.publishParameter(fmt.Sprintf("%s/solar/uv", s.mqttEntryPoint), 0, false, uv, s.oldUv)
-			s.oldSolarradiation = s.publishParameter(fmt.Sprintf("%s/solar/solarradiation", s.mqttEntryPoint), 0, false, solarradiation, s.oldSolarradiation)
+			s.oldSolarradiation = s.publishParameter(fmt.Sprintf("%s/solar/radiation", s.mqttEntryPoint), 0, false, solarradiation, s.oldSolarradiation)
 			s.oldBaromin = s.publishParameter(fmt.Sprintf("%s/absPressure", s.mqttEntryPoint), 0, false, baromin, s.oldBaromin)
 			//TODO calculate
 			s.oldBaromin = s.publishParameter(fmt.Sprintf("%s/relPressure", s.mqttEntryPoint), 0, false, baromin, s.oldBaromin)
-			s.oldWinddir = s.publishParameter(fmt.Sprintf("%s/win/dir", s.mqttEntryPoint), 0, false, winddir, s.oldWinddir)
-			s.oldWindspeedmph = s.publishParameterConv(fmt.Sprintf("%s/win/speed", s.mqttEntryPoint), 0, false, windspeedmph, s.oldWindspeedmph, mph2kphConvert)
-			s.oldWindgustmph = s.publishParameterConv(fmt.Sprintf("%s/win/gust", s.mqttEntryPoint), 0, false, windgustmph, s.oldWindgustmph, mph2kphConvert)
+			s.oldWinddir = s.publishParameter(fmt.Sprintf("%s/wind/dir", s.mqttEntryPoint), 0, false, winddir, s.oldWinddir)
+			s.oldWindspeedmph = s.publishParameterConv(fmt.Sprintf("%s/wind/speed", s.mqttEntryPoint), 0, false, windspeedmph, s.oldWindspeedmph, mph2kphConvert)
+			s.oldWindgustmph = s.publishParameterConv(fmt.Sprintf("%s/wind/gust", s.mqttEntryPoint), 0, false, windgustmph, s.oldWindgustmph, mph2kphConvert)
 			_ = s.publishParameter(fmt.Sprintf("%s/in/humid", s.mqttEntryPoint), 0, false, indoorhumidity, s.oldIndoorhumidity)
 			s.oldIndoorhumidity = s.publishParameter(fmt.Sprintf("%s/out/humid", s.mqttEntryPoint), 0, false, humidity, s.oldIndoorhumidity)
 			_ = s.publishParameterConv(fmt.Sprintf("%s/in/temp", s.mqttEntryPoint), 0, false, indoortempf, s.oldIndoortempf, fahrenheit2CelsiusConvert)
