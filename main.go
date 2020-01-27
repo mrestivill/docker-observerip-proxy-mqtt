@@ -213,6 +213,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.oldWeeklyrainin = s.publishParameter(fmt.Sprintf("%s/rain/weekly", s.mqttEntryPoint), 0, false, weeklyrainin, s.oldWeeklyrainin)
 			s.oldMonthlyrainin = s.publishParameter(fmt.Sprintf("%s/rain/monthly", s.mqttEntryPoint), 0, false, monthlyrainin, s.oldMonthlyrainin)
 			s.oldYearlyrainin = s.publishParameter(fmt.Sprintf("%s/rain/yearly", s.mqttEntryPoint), 0, false, yearlyrainin, s.oldYearlyrainin)
+			s.oldLowbatt = s.publishParameter(fmt.Sprintf("%s/out/battery", s.mqttEntryPoint), 0, false, lowbatt, s.oldLowbatt)
 			s.client.Publish(fmt.Sprintf("%s/info", s.mqttEntryPoint), 0, false, softwaretype)
 			// WeeWx compatible Mqtt
 			s.oldWeewxIndoortempf = s.publishParameterConv(fmt.Sprintf("%s/inTemp_C", s.mqttEntryPoint), 0, false, indoortempf, s.oldWeewxIndoortempf, fahrenheit2CelsiusConvert)
