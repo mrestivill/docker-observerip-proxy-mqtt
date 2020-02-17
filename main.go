@@ -28,6 +28,7 @@ var (
 const mph2kph float64 = 1.60934
 const projectVersion string = "v1.0.0"
 const projectURL string = "https://github.com/glarfs/docker-observerip-proxy-mqtt"
+const errorValue float64 = -100
 
 func main() {
 	flag.Parse()
@@ -123,7 +124,7 @@ func (s *Server) publishParameterConv(entryPoint string, qos byte, retain bool, 
 	if err != nil {
 		log.Print(err)
 	} else {
-		if s.client.IsConnected() {
+		if s.client.IsConnected() && val < errorValue {
 			mqValue := fmt.Sprintf("%.1f", fn(val))
 			if s.verbose {
 				log.Printf("entrypoint: %s, calus: %s \n", entryPoint, mqValue)
