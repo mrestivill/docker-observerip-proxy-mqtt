@@ -124,7 +124,7 @@ func (s *Server) publishParameterConv(entryPoint string, qos byte, retain bool, 
 	if err != nil {
 		log.Print(err)
 	} else {
-		if s.client.IsConnected() && val < errorValue {
+		if s.client.IsConnected() && val > errorValue {
 			mqValue := fmt.Sprintf("%.1f", fn(val))
 			if s.verbose {
 				log.Printf("entrypoint: %s, calus: %s \n", entryPoint, mqValue)
