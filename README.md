@@ -5,8 +5,8 @@
 Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt. The topics used on mqtt are compatible with [WeeWx weather software](https://github.com/weewx/weewx). It is needed to customize the receptor endpoint to point to this docker using wunderground protocol. The credentials should be correct if it is intendet to publish this values to wunderground platform.
 
 The observerip tested variants:
-* ethernet based: 
-* Wifi based:
+* ethernet based ![observer ip ethernet](observerip-ethernet.gif)
+* Wifi based: ![observer ip wifi](observerip-wifi.jpg)
 
 Based on projects: 
 * [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt) old scrapping version for observerip, compatible environment variables with this project
