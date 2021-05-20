@@ -2,12 +2,22 @@
 [![license](https://img.shields.io/github/license/glarfs/docker-observerip-proxy-mqtt.svg)](https://github.com/glarfs/docker-observerip-proxy-mqtt/blob/master/LICENSE)
 # docker-observerip-proxy-mqtt
 
-Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt. The topics used on mqtt are compatible with [WeeWx weather software](https://github.com/weewx/weewx).
+Publishes a web server (golang) with a path /weatherstation/updateweatherstation.php that intercepts the request to weather forecast and publishes info on mqtt. The topics used on mqtt are compatible with [WeeWx weather software](https://github.com/weewx/weewx). It is needed to customize the receptor endpoint to point to this docker using wunderground protocol. The credentials should be correct if it is intendet to publish this values to wunderground platform.
+
+The observerip tested variants:
+* ethernet based: 
+* Wifi based:
 
 Based on projects: 
 * [glarfs/docker-observerip-mqtt](https://github.com/glarfs/docker-observerip-mqtt) old scrapping version for observerip, compatible environment variables with this project
 * [matthewwall/weewx-observerip](https://github.com/matthewwall/weewx-observerip) php proxy server connected to weewx
 * [weewx/mqtt](https://github.com/weewx/weewx/wiki/mqtt) weewx mqtt variables
+
+Tested on the following weather stations:
+* WH1200 with ethernet cable on the receptor
+* WH2650A with wifi receptor (configured using WS View Android app)
+
+
 
 
 # Build
