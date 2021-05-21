@@ -37,6 +37,7 @@ func main() {
 	mqttPort := getEnv("OBSERVER_MQTT_PORT", "1883")
 	mqttEntryPoint := getEnv("OBSERVER_MQTT_ENTRYPOINT", "/test/meteo")
 	mqttClientID := getEnv("OBSERVER_MQTT_CLIENTID", "observerip-proxy")
+	proxy := getEnv("OBSERVER_PROXY_ENABLED", "true")
 	proxyURL := getEnv("OBSERVER_PROXY_URL", "http://rtupdate.wunderground.com")
 	proxyPath := getEnv("OBSERVER_PROXY_PATH", "/weatherstation/updateweatherstation.php")
 	fmt.Printf("configuration:\n verbose: %v\n mqtt:\n  broker: %v\n  port: %v\n  entrypoint: %v\n  clientId: %v\n proxy:\n  url: %v\n  path: %v\n http:\n  port: %v\n", *verbose, mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *httpAddr)
@@ -239,23 +240,29 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Fatalf("connection failed to mqtt server: %s port: %s\n", s.mqttBroker, s.mqttPort)
 		}
-		//proxy connection to wunderground
 		pBody := "success"
-		log.Printf("proxing to url: %s%s\n", s.proxyURL, r.RequestURI)
-		pr, err := http.Get(s.proxyURL + r.RequestURI)
-		if err != nil {
-			log.Fatalf("error proxy connection: %v\n", err)
-		} else {
-			defer pr.Body.Close()
-			body, err := ioutil.ReadAll(pr.Body)
-			if err != nil {
-				log.Fatalf("error proxy reading: %v\n", err)
-			} else {
-				pBody = string(body)
+		//proxy connection to wunderground
+		if val, err := strconv.ParseBool(s.proxy); err == nil {
+			if val ==true {			
+				log.Printf("proxing to url: %s%s\n", s.proxyURL, r.RequestURI)
+				pr, err := http.Get(s.proxyURL + r.RequestURI)
+				if err != nil {
+					log.Fatalf("error proxy connection: %v\n", err)
+				} else {
+					defer pr.Body.Close()
+					body, err := ioutil.ReadAll(pr.Body)
+					if err != nil {
+						log.Fatalf("error proxy reading: %v\n", err)
+					} else {
+						pBody = string(body)
+					}
+				}
 			}
-		}
+		} else {
+        		log.Fatalf("Given OBSERVER_PROXY_ENABLED is not a bool")
+    		}
 
-		//response
+		//response		
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8") // normal header
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(pBody))
