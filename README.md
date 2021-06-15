@@ -64,7 +64,20 @@ Run the following command remplacing the variables:
 docker run -p 8080:8080 -e OBSERVER_MQTT_HOST=x.x.x.x -e OBSERVER_MQTT_PORT=1883 -e OBSERVER_MQTT_ENTRYPOINT=my/meteo glarfs/observerip-proxy-mqtt
 ```
 
-Modify the endpoint on the observerip administration page(http://y.y.y.y) to go to http://[z.z.z.z]:8080/weatherstation/updateweatherstation.php
+Modify the endpoint on the observerip administration page(http://y.y.y.y) to go to http://[z.z.z.z]:8080/weatherstation/updateweatherstation.php.
+Telnet method: telnet y.y.y.y (admin/admin)
+```
+telnet y.y.y.y
+username: admin
+password: admin
+telnet > setdsthn z.z.z.z
+Ok
+telnet> saveconfig
+Saving Configuration to FLASH
+Ok
+telnet> reboot
+
+```
 
 
 # Test
