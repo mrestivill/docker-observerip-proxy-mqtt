@@ -48,7 +48,7 @@ Using docker (multiarchitecture)
 //docker login to docker-hub
 docker login
 //username and password
-docker buildx build -t glarfs/observerip-proxy-mqtt --platform=linux/arm,linux/arm64,linux/amd64 . --push
+docker buildx build -t glarfs/observerip-proxy-mqtt --platform=linux/arm,linux/arm64,linux/amd64,linux/riscv64 . --push
 ```
 
 # Run
