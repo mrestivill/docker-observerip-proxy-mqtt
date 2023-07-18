@@ -43,7 +43,7 @@ func main() {
 	fmt.Printf("configuration:\n verbose: %v\n mqtt:\n  broker: %v\n  port: %v\n  entrypoint: %v\n  clientId: %v\n proxy:\n  url: %v\n  path: %v\n http:\n  port: %v\n", *verbose, mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *httpAddr)
 
 	//changeURL := fmt.Sprintf("%sgo%s", baseChangeURL, *version)
-	http.Handle("/", NewServer(mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxyURL, proxyPath, *verbose))
+	http.Handle("/", NewServer(mqttBroker, mqttPort, mqttEntryPoint, mqttClientID, proxy, proxyURL, proxyPath, *verbose))
 	log.Fatal(http.ListenAndServe(*httpAddr, nil))
 }
 func getEnv(key, fallback string) string {
@@ -72,6 +72,7 @@ type Server struct {
 	mqttPort       string
 	mqttEntryPoint string
 	mqttClientID   string
+        proxy	       string
 	proxyURL       string
 	proxyPath      string
 	verbose        bool
@@ -115,8 +116,8 @@ type Server struct {
 }
 
 // NewServer returns an initialized outyet server.
-func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxyURL string, proxyPath string, verbose bool) *Server {
-	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxyURL: proxyURL, proxyPath: proxyPath, verbose: verbose, client: nil}
+func NewServer(mqttBroker, mqttPort string, mqttEntryPoint string, mqttClientID string, proxy string,proxyURL string, proxyPath string, verbose bool) *Server {
+	s := &Server{mqttBroker: mqttBroker, mqttPort: mqttPort, mqttEntryPoint: mqttEntryPoint, mqttClientID: mqttClientID, proxy: proxy, proxyURL: proxyURL, proxyPath: proxyPath, verbose: verbose, client: nil}
 	return s
 }
 
