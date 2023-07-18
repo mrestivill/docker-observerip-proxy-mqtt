@@ -3,8 +3,12 @@
 # Step #1 Run unit tests and build an executable that doesn't require the go libs
 FROM golang as builder
 WORKDIR /work
-ADD . .
-RUN go get -d -v
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY *.go ./
+#RUN go install -d -v
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o /observerip-proxy .
 #
 # Step #2: Copy the executable into a minimal image (less than 5MB) 
